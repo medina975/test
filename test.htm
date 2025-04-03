@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Apple Knight</title>
+        <style>
+            table { border-collapse: collapse; margin: 20px auto; }
+            td { width: 50px; height: 50px; text-align: center; font-size: 1.5em; cursor: pointer; }
+            .white { background: yellow; }
+            .black { background: orange; }
+            .apple { background-image: url('img/apple.png'); background-size: cover; }
+            .knight { font-size: 2em; color: #000; }
+            .controls { text-align: center; margin-bottom: 10px; }
+            .score, .timer { font-size: 1.2em; margin: 0 10px; }
+            button { padding: 5px 10px; }
+            .highlight { border: 2px solid black; }
+            img{
+                width: 30px;
+                height: 30px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="controls">
+            <select id="letter"></select>
+            <select id="number"></select>
+            <button id="btn">Start Game</button>
+            <span class="score">Score: 0</span>
+            <span class="timer">Time: 30s</span>
+        </div>
+        <table id="chess"></table>
+
+        <script>
+            const chess = document.getElementById('chess');
+            const letter = document.getElementById('letter');
+            const number = document.getElementById('number');
+            const btn = document.getElementById('btn');
+            const scoreDisplay = document.querySelector('.score');
+            const timerDisplay = document.querySelector('.timer');
+
+            let abc = ' ABCDEFGH';
+            let apples = [];
+            let score = 0;
+            let timeLeft = 30;
+            let timer;
+            let knightPos = [1, 2];
+            let possibleMoves = [];
+
+            for (let i = 1; i <= 8; i++) {
+                number.innerHTML += `<option>${i}</option>`;
+                letter.innerHTML += `<option value="${i}">${abc[i]}</option>`;
+            }
+
+            btn.onclick = function() {
+                score = 0;
+                timeLeft = 30;
+                apples = [];
+                knightPos = [Number(number.value), Number(letter.value)];
+                placeApples();
+                calculateMoves();
+                updateDisplay();
+                clearInterval(timer);
+                timer = setInterval(countdown, 1000);
+            }
+
+            function placeApples() {
+                while (apples.length < 30) {
+                    let x = Math.ceil(Math.random() * 8);
+                    let y = Math.ceil(Math.random() * 8);
+                    if (!apples.some(a => a[0] === x && a[1] === y) && (x !== knightPos[0] || y !== knightPos[1])) {
+                        apples.push([x, y]);
+                    }
+                }
+            }
+
+            function calculateMoves() {
+                possibleMoves = [];
+                const moves = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+                moves.forEach(move => {
+                    let [dx, dy] = move;
+                    let x = knightPos[0] + dx;
+                    let y = knightPos[1] + dy;
+                    if (x > 0 && x <= 8 && y > 0 && y <= 8) {
+                        possibleMoves.push([x, y]);
+                    }
+                });
+            }
+
+            function updateDisplay() {
+                let kod = '';
+                for (let i = 0; i <= 8; i++) {
+                    kod += '<tr>';
+                    for (let j = 0; j <= 8; j++) {
+                        let color = i == 0 || j == 0 ? '' : (i + j) % 2 ? 'white' : 'black';
+                        let isMove = possibleMoves.some(m => m[0] === i && m[1] === j);
+                        let cell = i == 0 ? abc[j] : j == 0 ? i :
+                            i == knightPos[0] && j == knightPos[1] ? '♞' :
+                            apples.some(a => a[0] === i && a[1] === j) ? `<img src= 'https://beetss.com/media/beets-original-color.png'/>` :
+                            '';
+
+                        kod += `<td onclick="moveKnight(${i}, ${j})" class="${color} ${cell === `<img src= 'https://beetss.com/media/beets-original-color.png'/>` ? 'apple' : ''} ${isMove ? 'highlight' : ''}">${cell}</td>`;
+                    }
+                    kod += '</tr>';
+                }
+                chess.innerHTML = kod;
+            }
+
+            function moveKnight(row, col) {
+                if (possibleMoves.some(m => m[0] === row && m[1] === col)) {
+                    knightPos = [row, col];
+
+                    let appleIndex = apples.findIndex(a => a[0] === row && a[1] === col);
+                    if (appleIndex !== -1) {
+                        score += 10;
+                        apples.splice(appleIndex, 1);
+                    }
+
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    calculateMoves();
+                    updateDisplay();
+                }
+            }
+
+            function countdown() {
+                timeLeft--;
+                timerDisplay.textContent = `Time: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert(`Time's up! Final Score: ${score}`);
+                }
+            }
+        </script>
+    </body>
+</html>
+
